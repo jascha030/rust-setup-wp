@@ -1,11 +1,31 @@
 use structopt::StructOpt;
+use rpassword::read_password;
 
 #[derive(StructOpt)]
 struct Cli {
     name: String,
-    user: String,
-    password: String,
+    database_user: String
 }
+
+struct DatabaseCredentials {
+    name: String,
+    user: String,
+    password: String
+}
+
+impl DatabaseCredentials {
+    pub fn new(cli: Cli) -> Self {
+        println!("Database password: ");
+        let pass = read_password().unwrap();
+
+        DatabaseCredentials {
+            name: String::from(cli.name),
+            user: String::from(cli.database_user),
+            password: pass
+        }
+    }
+}
+
 
 fn get_password_display(password: String) -> String {
     let mut display: String = String::from("");
@@ -21,22 +41,22 @@ fn get_password_display(password: String) -> String {
     return display;
 }
 
-fn output_arguments_message(args: Cli) {
-    let password_display: String = get_password_display(args.password);
+fn output_arguments_message(credentials: DatabaseCredentials) {
+    let password_display: String = get_password_display(credentials.password);
 
     println!(
         "Creating a project with values name: {}, user: {}, pass: {}",
-        args.name,
-        args.user,
+        credentials.name,
+        credentials.user,
         password_display
     );
 }
 
 fn main() {
-    let args = Cli::from_args();
+    let credentials: DatabaseCredentials = DatabaseCredentials::new(Cli::from_args());
 
     // Output message to display args
-    output_arguments_message(args);
+    output_arguments_message(credentials);
 }
 
 
