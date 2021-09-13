@@ -2,7 +2,7 @@ use structopt::StructOpt;
 use rpassword::read_password;
 use mysql::*;
 use mysql::prelude::*;
-use std::process::{exit, Output};
+use std::process::{exit, Stdio};
 use std::process::Command;
 use std::fs;
 
@@ -51,7 +51,7 @@ impl DatabaseCredentials {
     }
 }
 
-fn create_database(credentials: DatabaseCredentials) {
+fn create_database(credentials: &DatabaseCredentials) {
     let opts = Opts::from_url(
         format!("mysql://{}:{}@localhost:3306", credentials.user, credentials.password).as_str()
     ).unwrap();
@@ -69,41 +69,61 @@ fn create_database(credentials: DatabaseCredentials) {
     }
 }
 
+fn composer_create_project(name: String) {
+    let child = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .arg("/C")
+            .arg(format!("`which composer` create-project roots/bedrock {}", name))
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap()
+            .wait()
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .arg(format!("`which composer` create-project roots/bedrock {}", name))
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap()
+            .wait()
+    };
+
+    match child {
+        Err(error) => {
+            println!("Failed to execute composer: \"{}\", Reason: {:?}", name, error.kind());
+            exit(1);
+        }
+        Ok(_) => {
+            println!("Project: {}, was created successfully!", name);
+            exit(0);
+        }
+    }
+}
+
 fn main() {
     let arguments = Cli::from_args();
     let credentials: DatabaseCredentials = DatabaseCredentials::new(arguments);
-    let name = credentials.name.as_str();
+
+    // Get references
+    let DatabaseCredentials { ref name, .. } = credentials;
 
     // Output message to display args
     credentials.output_arguments_message();
 
     // Outputs success message or exits with MySQL error
-    // create_database(credentials);
+    create_database(&credentials);
 
+    // Create dir or exit on error
     match fs::create_dir(name) {
         Err(error) => {
             println!("Failed to create dir: \"{}\", Reason: {:?}", name, error.kind());
             exit(1);
-        },
+        }
         Ok(_) => {}
     }
 
-    let output = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .arg("/C")
-            .arg(format!("composer create-project roots/bedrock {}", name))
-            .output()
-            .expect("failed to execute process")
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg(format!("composer create-project roots/bedrock {}", name))
-            .output()
-            .expect("failed to execute process")
-    };
-
-    println!("{}", String::from_utf8(output.stdout).unwrap().as_str());
-    println!("Project: {}, was created successfully!", name);
+    // Run and output child process composer.
+    composer_create_project(name.to_string());
 }
 
 
