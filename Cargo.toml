@@ -1,6 +1,6 @@
 [package]
 name = "setup-wp"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Jascha030 <contact@jaschavanaalst.nl>"]
 description = "CLI command to quickly create a wordpress bedrock environment with database."
 license = "MIT OR Apache-2.0"
