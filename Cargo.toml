@@ -6,8 +6,10 @@ description = "CLI command to quickly create a wordpress bedrock environment wit
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+homepage = "https://github.com/jascha030/rust-setup-wp"
+repository = "https://github.com/jascha030/rust-setup-wp"
+keywords = ["cli", "scaffold", "wordpress", "bedrock"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 structopt = "0.3.23"
