@@ -2,7 +2,9 @@ use structopt::StructOpt;
 use rpassword::read_password;
 use mysql::*;
 use mysql::prelude::*;
-use std::process::exit;
+use std::process::{exit, Output};
+use std::process::Command;
+use std::fs;
 
 #[derive(StructOpt)]
 struct Cli {
@@ -70,10 +72,38 @@ fn create_database(credentials: DatabaseCredentials) {
 fn main() {
     let arguments = Cli::from_args();
     let credentials: DatabaseCredentials = DatabaseCredentials::new(arguments);
+    let name = credentials.name.as_str();
 
     // Output message to display args
     credentials.output_arguments_message();
-    // connection.query_drop()?;
+
+    // Outputs success message or exits with MySQL error
+    // create_database(credentials);
+
+    match fs::create_dir(name) {
+        Err(error) => {
+            println!("Failed to create dir: \"{}\", Reason: {:?}", name, error.kind());
+            exit(1);
+        },
+        Ok(_) => {}
+    }
+
+    let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .arg("/C")
+            .arg(format!("composer create-project roots/bedrock {}", name))
+            .output()
+            .expect("failed to execute process")
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .arg(format!("composer create-project roots/bedrock {}", name))
+            .output()
+            .expect("failed to execute process")
+    };
+
+    println!("{}", String::from_utf8(output.stdout).unwrap().as_str());
+    println!("Project: {}, was created successfully!", name);
 }
 
 
