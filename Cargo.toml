@@ -13,5 +13,5 @@ categories = ["command-line-utilities"]
 
 [dependencies]
 structopt = "0.3.23"
-rpassword = "5.0.1"
+rpassword = "7.5.0"
 mysql = "21.0.1"
